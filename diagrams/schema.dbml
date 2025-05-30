@@ -1,0 +1,417 @@
+//Generic wrapper for all resources
+Table Resource {
+  id int [pk]
+  object objectType [not null, note: 'denotes type of object']
+  url str [not null]
+  data_updated_at datetime [not null]
+}
+
+Table Assignment {
+  id int [pk, not null]
+  available_at datetime
+  burned_at datetime
+  created_at datetime [not null]
+  hidden boolean [not null]
+  passed_at datetime
+  resurrected_at datetime
+  srs_stage int [not null]
+  started_at datetime
+  subject_id int [not null]
+  subject_type subjectType [not null]
+  unlocked_at datetime
+}
+Ref: Assignment.id - Resource.id
+Ref: Assignment.srs_stage > Srs.id
+Ref: Assignment.subject_id > Subject.id
+
+Table LevelProgression {
+  id int [pk, not null]
+  abandoned_at datetime
+  completed_at datetime
+  created_at datetime [not null]
+  level int [not null]
+  passed_at datetime
+  started_at datetime
+  unlocked_at datetime
+}
+Ref: LevelProgression.id - Resource.id
+
+Table Reset {
+  id int [pk, not null]
+  confirmed_at datetime
+  created_at datetime [not null]
+  original_level int [not null]
+  target_level int [not null]
+}
+Ref: Reset.id - Resource.id
+
+Table Review {
+  id int [pk, not null]
+  assignment_id int [not null]
+  created_at datetime [not null]
+  ending_srs_stage int [not null]
+  incorrect_meaning_answers int [not null]
+  incorrect_reading_answers int [not null]
+  spaced_repetition_system_id int [not null]
+  starting_srs_stage int [not null]
+  subject_id int [not null]
+}
+Ref: Review.id - Resource.id
+Ref: Review.assignment_id > Assignment.id
+Ref: Review.spaced_repetition_system_id > Srs.id
+Ref: Review.subject_id > Subject.id
+
+Table ReviewStatistic {
+  id int [pk, not null]
+  created_at datetime [not null]
+  hidden boolean [not null]
+  meaning_correct int [not null]
+  meaning_current_streak int [not null]
+  meaning_incorrect int [not null]
+  meaning_max_streak int [not null]
+  percentage_correct int [not null]
+  reading_correct int [not null]
+  reading_current_streak int [not null]
+  reading_incorrect int [not null]
+  reading_max_streak int [not null]
+  subject_id int [not null]
+  subject_type subjectType [not null]
+}
+Ref: ReviewStatistic.id - Resource.id
+Ref: ReviewStatistic.subject_id > Subject.id
+
+Table Srs {
+  id int [pk, not null]
+  burning_stage_position int [not null]
+  created_at datetime [not null]
+  description str [not null]
+  name str [not null]
+  passing_stage_position int [not null]
+  //Stages array: normalised into separate table
+  starting_stage_position int [not null]
+  unlocking_stage_position int [not null]
+}
+Ref: Srs.id - Resource.id
+
+Table SrsStage {
+  srs_id int [pk, not null]
+  interval int
+  interval_unit timeUnit
+  position int [pk, not null]
+}
+Ref: SrsStage.srs_id > Srs.id
+
+Table StudyMaterial {
+  id int [pk, not null]
+  created_at datetime [not null]
+  hidden boolean [not null]
+  meaning_note str [not null]
+  //meaning_synonyms: normalised into StudyMaterialMeaningSynonym
+  reading_note str [not null]
+  subject_id int [not null]
+  subject_type subjectType [not null]
+}
+Ref: StudyMaterial.id - Resource.id
+Ref: StudyMaterial.subject_id - Subject.id
+
+Table StudyMaterialMeaningSynonym {
+  study_material_id int [pk, not null]
+  synonym str [pk, not null]
+}
+Ref: StudyMaterialMeaningSynonym.study_material_id > StudyMaterial.id
+
+Table Subject {
+  id int [pk, not null]
+  //auxiliary_meanings: norm. into SubjectAuxiliaryMeaning
+  characters str
+  created_at datetime [not null]
+  document_url str [not null]
+  hidden_at datetime
+  lesson_position int [not null]
+  level int [not null]
+  meaning_mnemonic str [not null]
+  //meanings: norm. into SubjectMeaning
+  slug str [not null]
+  spaced_repetition_system_id int [not null]
+}
+Ref: Subject.id - Resource.id
+Ref: Subject.spaced_repetition_system_id > Srs.id
+
+Table SubjectAuxiliaryMeaning {
+  subject_id int [pk, not null]
+  meaning str [pk, not null]
+  type whiteBlack
+}
+Ref: SubjectAuxiliaryMeaning.subject_id > Subject.id
+
+Table SubjectMeaning {
+  subject_id int [pk, not null]
+  meaning str [pk, not null]
+  primary boolean [not null]
+  accepted_answer boolean [not null]
+}
+Ref: SubjectMeaning.subject_id > Subject.id
+
+Table Radical{
+  subject_id int [pk, not null]
+  //amalgamation_subject_ids: normalised into RadicalAmalgamationSubjectIds
+  //Character images: norm into RadicalCharacterImage
+}
+Ref: Radical.subject_id - Subject.id
+
+Table RadicalAmalgamationSubjectIds{
+  radical_id int [pk, not null]
+  kanji_id int [pk, not null]
+}
+Ref: RadicalAmalgamationSubjectIds.radical_id > Radical.subject_id
+Ref: RadicalAmalgamationSubjectIds.kanji_id > Kanji.subject_id
+
+Table RadicalCharacterImage{
+  radical_id int [pk, not null]
+  url str [pk, not null]
+  //content_type - the DB only delivers image/svg+xml
+  //metadata - redundant
+}
+//One radical can have many character images
+Ref: RadicalCharacterImage.radical_id > Radical.subject_id
+
+Table Kanji{
+  subject_id int [pk, not null]
+  //amalgamation_subject_ids: norm into KanjiAmalgamationSubjectIds
+  //component_subject_ids: norm into KanjiComponentSubjectIds
+  meaning_hint str
+  reading_hint str
+  reading_mnemonic str [not null]
+  //readings: norm into KanjiReadings
+  //visually_similar_subject_ids: norm into KanjiVisuallySimilarSubjectIds
+}
+
+Table KanjiAmalgamationSubjectId{
+  kanji_id int [pk, not null]
+  vocab_id str [pk, not null]
+}
+Ref: KanjiAmalgamationSubjectId.kanji_id > Kanji.subject_id
+Ref: KanjiAmalgamationSubjectId.vocab_id > Vocabulary.subject_id
+
+Table KanjiComponentSubjectIds{
+  kanji_id int [pk, not null]
+  radical_id int [pk, not null]
+}
+Ref: KanjiComponentSubjectIds.kanji_id > Kanji.subject_id
+Ref: KanjiComponentSubjectIds.radical_id > Radical.subject_id
+
+Table KanjiReadings{
+  kanji_id int [pk, not null]
+  reading str [pk, not null]
+  accepted_answer bool [not null]
+  type kanjiReadingType [not null]
+}
+Ref: KanjiReadings.kanji_id > Kanji.subject_id
+
+Table KanjiVisuallySimilarSubjectIds{
+  kanji_id int [pk, not null]
+  similar_kanji_id int [pk, not null]
+}
+Ref: KanjiVisuallySimilarSubjectIds.kanji_id > Kanji.subject_id
+Ref: KanjiVisuallySimilarSubjectIds.similar_kanji_id > Kanji.subject_id
+
+Table Vocabulary{
+  subject_id int [pk, not null]
+  //component_subject_ids norm into VocabComponentSubjId
+  //context_sentences norm into VocabContextSentence
+  meaning_mnemonic str [not null]
+  //parts_of_speech norm VocabPartOfSpeech
+  //pronunciation_audios norm VocabPronunciationAudio
+  //readings norm VocabReadings
+  reading_mnemonic str [not null]
+}
+Ref: Vocabulary.subject_id - Subject.id
+
+Table VocabComponentSubjId {
+  vocab_id int [pk, not null]
+  kanji_id int [pk, not null]
+}
+Ref: VocabComponentSubjId.vocab_id > Vocabulary.subject_id
+Ref: VocabComponentSubjId.kanji_id > Kanji.subject_id
+
+Table VocabContextSentence {
+  vocab_id int [pk, not null]
+  en str [pk, not null]
+  ja str [not null]
+}
+Ref: VocabContextSentence.vocab_id > Vocabulary.subject_id
+
+Table VocabPartOfSpeech {
+  vocab_id int [pk, not null]
+  part str [not null]
+}
+Ref: VocabPartOfSpeech.vocab_id > Vocabulary.subject_id
+
+Table VocabPronunciationAudio {
+  vocab_id int [pk, not null]
+  url int [pk, not null]
+  content_type str [not null]
+  //metadata norm VocabAudioMetadata
+}
+Ref: VocabPronunciationAudio.vocab_id > Vocabulary.subject_id
+
+Table VocabAudioMetadata{
+  vocab_id int [pk, not null]
+  url int [pk, not null]
+  gender str [not null]
+  source_id int [not null]
+  pronunciation str [not null]
+  voice_actor_id int [not null]
+  //voice_actor_name - in VoiceActors
+  //voice_actor_description - in VoiceActors
+}
+Ref: VocabAudioMetadata.(vocab_id, url) - VocabPronunciationAudio.(vocab_id,url)
+Ref: VocabAudioMetadata.voice_actor_id > VoiceActor.id
+
+Table VocabReading {
+  vocab_id int [pk, not null]
+  accepted_answer bool [not null]
+  primary bool [not null]
+  reading str [pk, not null]  
+}
+Ref: VocabReading.vocab_id > Vocabulary.subject_id
+
+Table KanaVocabulary {
+  subject_id int [pk, not null]
+  //context_sentences norm KanaVocabContextSentence
+  meaning_mnemonic str [not null]
+  //parts_of_speech norm KanaVocabPartOfSpeech
+  //pronunciation_audios norm KanaVocabPronunciationAudio
+}
+Ref: KanaVocabulary.subject_id - Subject.id
+
+Table KanaVocabContextSentence {
+  vocab_id int [pk, not null]
+  en str [pk, not null]
+  ja str [not null]
+}
+Ref: KanaVocabContextSentence.vocab_id > KanaVocabulary.subject_id
+
+Table KanaVocabPartOfSpeech {
+  vocab_id int [pk, not null]
+  part str [not null]
+}
+Ref: KanaVocabPartOfSpeech.vocab_id > KanaVocabulary.subject_id
+
+Table KanaVocabPronunciationAudio {
+  vocab_id int [pk, not null]
+  url int [pk, not null]
+  content_type str [not null]
+  //metadata norm VocabAudioMetadata
+}
+Ref: KanaVocabPronunciationAudio.vocab_id > KanaVocabulary.subject_id
+
+Table KanaVocabAudioMetadata{
+  vocab_id int [pk, not null]
+  url int [pk, not null]
+  gender str [not null]
+  source_id int [not null]
+  pronunciation str [not null]
+  voice_actor_id int [not null]
+  //voice_actor_name - in VoiceActors
+  //voice_actor_description - in VoiceActors
+}
+Ref: KanaVocabAudioMetadata.(vocab_id, url) - KanaVocabPronunciationAudio.(vocab_id,url)
+Ref: KanaVocabAudioMetadata.voice_actor_id > VoiceActor.id
+
+//Won't cache summary
+
+Table User{
+  id str [pk, not null] //Id doesn't reference resources, contains dashes
+  current_vacation_started_at datetime
+  level int [not null]
+  //preferences norm UserPreferences
+  profile_url str [not null]
+  started_at datetime [not null]
+  //subscription norm UserSubscription
+  username str [not null]
+}
+
+Table UserPreferences {
+  user_id str [pk, not null]
+  //default_voice_actor_id - deprecated
+  extra_study_autoplay_audio boolean [not null]
+  lessons_autoplay_audio boolean [not null]
+  lessons_batch_size int [not null]
+  //lessons_presentation_order - deprecated
+  reviews_autoplay_audio boolean [not null]
+  reviews_display_srs_indicator boolean [not null]
+  reviews_presentation_order reviewsPresentationOrder [not null]
+}
+Ref: UserPreferences.user_id - User.id
+
+Table UserSubscription{
+  user_id str [pk, not null]
+  actve boolean [not null]
+  max_level_granted integer [not null]
+  period_ends_at datetime
+  type userSubscription [not null]
+}
+Ref: UserSubscription.user_id - User.id
+
+Table VoiceActor{
+  id int [pk, not null]
+  description str [not null]
+  gender str [not null]
+  name str [not null]
+}
+Ref: VoiceActor.id - Resource.id
+
+enum objectType {
+  assignment
+  kana_vocabulary
+  kanji
+  level_progression
+  radical
+  reset
+  review_statistic
+  review
+  spaced_repetition_system
+  study_material
+  user
+  vocabulary
+  voice_actor
+}
+
+enum subjectType{
+  kana_vocabulary
+  kanji
+  radical
+  vocabulary
+}
+
+enum whiteBlack{
+  whitelist
+  blacklist
+}
+
+enum timeUnit {
+  milliseconds
+  seconds
+  minutes
+  hours
+  days
+  weeks
+}
+
+enum kanjiReadingType{
+  kunyomi
+  nanori
+  onyomi
+}
+
+enum reviewsPresentationOrder{
+  shuffled
+  lower_levels_first
+}
+
+enum userSubscription {
+  free
+  recurring
+  lifetime
+}

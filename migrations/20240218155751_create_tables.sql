@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS "resources" (
 	"data_updated_at"	TEXT NOT NULL,
 	PRIMARY KEY("id")
 );
+
 CREATE TABLE IF NOT EXISTS "level_progressions" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"abandoned_at"	TEXT,
