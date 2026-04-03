@@ -1,3 +1,6 @@
+#![no_std]
+extern crate alloc;
+
 pub mod assignment;
 pub mod level_progression;
 pub mod reset;
